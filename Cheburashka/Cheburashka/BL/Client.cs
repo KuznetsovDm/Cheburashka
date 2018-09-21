@@ -46,7 +46,6 @@ namespace Cheburashka.BL
             {
                 _client.Close();
             }
-
         }
 
         private async Task<BaseMessage> ReadData()
