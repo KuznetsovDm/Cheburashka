@@ -29,5 +29,14 @@ namespace Cheburashka.Extensions
                 return (BaseMessage)formatter.Deserialize(stream);
             });
         }
+
+        public static BaseMessage GetMessage(byte[] bytes)
+        {
+            using (var stream = new MemoryStream(bytes))
+            {
+                var formatter = new BinaryFormatter();
+                return (BaseMessage)formatter.Deserialize(stream);
+            }
+        }
     }
 }

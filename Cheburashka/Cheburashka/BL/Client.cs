@@ -1,8 +1,10 @@
 ﻿using Cheburashka.BE;
 using System;
 using System.Net.Sockets;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
+using Cheburashka.Extensions;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Cheburashka.BL
 {
@@ -35,6 +37,7 @@ namespace Cheburashka.BL
                 while (true)
                 {
                     var result = await ReadData();
+                    //
                 }
             }
             catch (Exception)
@@ -50,37 +53,41 @@ namespace Cheburashka.BL
 
         private async Task<BaseMessage> ReadData()
         {
-            return await Task.Run(() =>
+            var list = new List<byte[]>();
+            int bytes = 0;
+            do
             {
-                var formatter = new BinaryFormatter();
+                var data = new byte[1024]; // буфер для получаемых данных
+                bytes = await _stream.ReadAsync(data, 0, data.Length);
+                list.Add(data);
+            }
+            while (_stream.DataAvailable);
 
-                return (BaseMessage)formatter.Deserialize(_stream);
-            });
-            //var data = new byte[64]; // буфер для получаемых данных
-            //StringBuilder builder = new StringBuilder();
-            //int bytes = 0;
-            //do
-            //{
-            //    bytes = await _stream.ReadAsync(data, 0, data.Length);
-            //    builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
-            //}
-            //while (_stream.DataAvailable);
+            return MessageHelper.GetMessage(list.SelectMany(b => b).ToArray());
         }
 
         private async Task SendData(string data, string method)
         {
-            await Task.Run(() =>
+            var message = new BaseMessage
             {
-                var formatter = new BinaryFormatter();
-                var message = new BaseMessage
-                {
-                    Success = true,
-                    Data = data,
-                    Method = method
-                };
+                Success = true,
+                Data = data,
+                Method = method
+            };
 
-                formatter.Serialize(_stream, message);
-            });
+            var bytes = await message.GetBytes();
+            int count = 1024;
+            int offset = 0;
+            do
+            {
+                await _stream.WriteAsync(bytes, offset, count);
+                offset += count;
+            } while (offset < bytes.Length);
+        }
+
+        public async Task Login(string login)
+        {
+
         }
     }
 }
