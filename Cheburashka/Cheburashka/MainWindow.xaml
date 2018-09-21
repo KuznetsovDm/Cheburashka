@@ -4,9 +4,144 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Cheburashka"
+        xmlns:viewModels="clr-namespace:Cheburashka.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
+        Title="MainWindow" Height="450" Width="800" MinWidth="800" MinHeight="450">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+        <NullableBoolConverter x:Key="NullableToBoolConverter"/>
+    </Window.Resources>
+    <Grid Background="LightCyan">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="2*"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <ListBox x:Name="Users" Grid.Row="0" Background="Beige" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type viewModels:UserViewModel}">
+                        <Border BorderThickness="0, 0, 0, 1" BorderBrush="Gray">
+                            <DockPanel LastChildFill="False">
+                                <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+                                    <TextBlock DockPanel.Dock="Left" Text="{Binding Path=NickName}" Margin="5"/>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Path=TimeLastMessage}" Margin="5" Foreground="Gray"/>
+                                </DockPanel>
+                                <DockPanel DockPanel.Dock="Bottom" LastChildFill="False">
+                                    <TextBlock DockPanel.Dock="Left" Text="{Binding Path=LastMessage}" Margin="5" Foreground="Gray" TextWrapping="NoWrap"/>
+                                    <Border DockPanel.Dock="Right" Background="Green" Width="16" Height="16" CornerRadius="8" 
+                                            Visibility="{Binding Path=HaveNewMessages, Converter={StaticResource BoolToVisConverter}}"/>
+                                </DockPanel>
+                            </DockPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+                <!--<ListBox.Items>
+                    <viewModels:UserViewModel NickName="Тимур Бурханов" HaveNewMessages="True"/>
+                    <viewModels:UserViewModel NickName="Михаил Вечтомов" />
+                </ListBox.Items>-->
+            </ListBox>
+            <Border Grid.Row="1" Background="Beige" BorderBrush="Black" BorderThickness="0, 2, 0, 0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4*"/>
+                        <ColumnDefinition Width="3*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <DockPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+                        <TextBlock DockPanel.Dock="Left" Text="Login: " Margin="5"/>
+                        <TextBox x:Name="Login" Margin="5"/>
+                    </DockPanel>
+                    <DockPanel Grid.Row="1" Grid.Column="0">
+                        <TextBlock DockPanel.Dock="Left" Text="IP: " Margin="5"/>
+                        <TextBox x:Name="Ip" Margin="5"/>
+                    </DockPanel>
+                    <DockPanel Grid.Row="1" Grid.Column="1">
+                        <TextBlock DockPanel.Dock="Left" Text="Port: " Margin="5"/>
+                        <TextBox x:Name="Port" Margin="5"/>
+                    </DockPanel>
+                    <Button x:Name="ConnectButton" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Content="Подключиться" Margin="5" Click="Connect"/>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Column="1">
+            <TextBlock x:Name="Hint" HorizontalAlignment="Center" VerticalAlignment="Center" Text="Подключитесь к серверу" FontWeight="Bold" FontSize="18"/>
+        </Grid>
+
+        <DockPanel Grid.Column="1" DataContext="{Binding ElementName=Users, Path=SelectedItem}" LastChildFill="False" Background="LightCyan">
+            <DockPanel.Style>
+                <Style TargetType="DockPanel">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ElementName=Users, Path=SelectedItem}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Hidden"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DockPanel.Style>
+            <DockPanel DockPanel.Dock="Bottom">
+                <Button DockPanel.Dock="Right" Content="Отправить" Margin="5" Padding="3" Command="{Binding Path=SendCommand}" IsDefault="True"/>
+                <TextBox Text="{Binding Path=NewMessage, UpdateSourceTrigger=PropertyChanged}" Margin="5" Padding="3"/>
+            </DockPanel>
+            <local:ScrollingListBox x:Name="Messages" DockPanel.Dock="Bottom" ItemsSource="{Binding Path=Messages}" Background="Transparent" BorderThickness="0" 
+                                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <local:ScrollingListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    </Style>
+                </local:ScrollingListBox.ItemContainerStyle>
+                <local:ScrollingListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type viewModels:MessageViewModel}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="Border" Grid.ColumnSpan="2" HorizontalAlignment="Left" Background="GhostWhite" CornerRadius="3" Padding="5">
+                                <DockPanel>
+                                    <DockPanel LastChildFill="False">
+                                        <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Text="{Binding Path=Message}"/>
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding Path=SendTime, StringFormat=hh:mm}" FontSize="10"/>
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding Path=ResvTime, StringFormat=hh:mm}" FontSize="10"/>
+                                        <DockPanel DockPanel.Dock="Bottom" Margin="2">
+                                            <TextBlock DockPanel.Dock="Right" Margin="2">
+                                                <Hyperlink>Переотправить</Hyperlink>
+                                            </TextBlock>
+                                            <TextBlock Text="Ошибка отправки" Margin="2"/>
+                                        </DockPanel>
+                                    </DockPanel>
+                                </DockPanel>
+                            </Border>
+                        </Grid>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Path=IsYour}" Value="True">
+                                <Setter TargetName="Border" Property="Grid.Column" Value="1"/>
+                                <Setter TargetName="Border" Property="Background" Value="LightGreen"/>
+                                <Setter TargetName="Border" Property="HorizontalAlignment" Value="Right"/>
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </local:ScrollingListBox.ItemTemplate>
+                <!--<ListBox.Items>
+                    <viewModels:MessageViewModel IsYour="True" Message="Миша!" Time="12:34"/>
+                    <viewModels:MessageViewModel IsYour="False" Message="Привет" Time="12:37"/>
+                    <viewModels:MessageViewModel IsYour="False" Message="DSfa;sldfajsdlkfa sasdfasdf aksdj ;asdfasdfka sasdfasdf; kajasdfasd ;klasdfasdfasdfaj ;ladsfasfk aj;kl ssdfasdf ;adlk ;asdfask aasf; alksd jasdfas" Time="12:37"/>
+                </ListBox.Items>-->
+            </local:ScrollingListBox>
+        </DockPanel>
     </Grid>
 </Window>
