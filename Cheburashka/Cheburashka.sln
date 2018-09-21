@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28010.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cheburashka", "Cheburashka\Cheburashka.csproj", "{ED84818F-642C-4EBC-828C-916D423A5C17}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheburashkaHots", "CheburashkaHots\CheburashkaHots.csproj", "{6FDE2E42-FDDA-4F0B-B40F-48A310871511}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{ED84818F-642C-4EBC-828C-916D423A5C17}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED84818F-642C-4EBC-828C-916D423A5C17}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ED84818F-642C-4EBC-828C-916D423A5C17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FDE2E42-FDDA-4F0B-B40F-48A310871511}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FDE2E42-FDDA-4F0B-B40F-48A310871511}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FDE2E42-FDDA-4F0B-B40F-48A310871511}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FDE2E42-FDDA-4F0B-B40F-48A310871511}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
