@@ -87,21 +87,23 @@ public class Connection : IObservable
 {
     private IObserver _observer;
     private byte[] _buffer;
+    private TcpClient _client;
 
     public Connection(TcpClient client)
     {
-        Receive(client);
+        _client = client;
+        Receive();
         _buffer = new byte[1025];
     }
 
-    private void Receive(TcpClient client)
+    private void Receive()
     {
         Task.Run(() =>
         {
             try
             {
                 using(var memory = new MemoryStream())
-                using(var stream = client.GetStream())
+                using(var stream = _client.GetStream())
                 {
                     while(true)
                     {
@@ -118,17 +120,21 @@ public class Connection : IObservable
         });
     }
 
-    //public Task Send()
-    //{
-    //    try
-    //    {
+    public Task Send()
+    {
+        throw new NotImplementedException();
+        try
+        {
+            using(var stream = _client.GetStream())
+            {
+                //           stream.WriteAsync();
+            }
+        }
+        catch(Exception ex)
+        {
 
-    //    }
-    //    catch(Exception ex)
-    //    {
-
-    //    }
-    //}
+        }
+    }
 
     public void Subscribe(IObserver observer)
     {
