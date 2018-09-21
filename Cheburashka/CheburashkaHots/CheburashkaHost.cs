@@ -37,7 +37,7 @@ namespace CheburashkaHots
             try
             {
                 var listener  = new TcpListener(IPAddress.Any,_options.Port);
-
+                listener.Start();
                 while(true)
                 {
                     var client = await listener.AcceptTcpClientAsync();
@@ -117,6 +117,18 @@ public class Connection : IObservable
 
         });
     }
+
+    //public Task Send()
+    //{
+    //    try
+    //    {
+
+    //    }
+    //    catch(Exception ex)
+    //    {
+
+    //    }
+    //}
 
     public void Subscribe(IObserver observer)
     {

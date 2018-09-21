@@ -8,11 +8,13 @@ namespace CheburashkaHots
 {
     class Program
     {
-        static async void Main(string[] args)
+        static void Main()
         {
-            await new Host()
+            new Host()
                      .Configure(options => { options.Port = 10000; })
-                     .RunAsync();
+                     .RunAsync()
+                     .GetAwaiter()
+                     .GetResult();
         }
     }
 }
