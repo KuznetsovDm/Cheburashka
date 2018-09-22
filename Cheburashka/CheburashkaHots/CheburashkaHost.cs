@@ -12,25 +12,53 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Cheburashka.BE;
+using Cheburashka.Extensions;
 
 namespace CheburashkaHots
 {
-    public class CheburashkaHost
+    public class CheburashkaHost : Host
     {
+        public CheburashkaHost()
+        {
+        }
 
-        public virtual Task OnDisconnect()
+        public override Task OnConnect(Connection e)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task OnDisconnect((Connection, Exception) info)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task OnMessage((Connection, BaseMessage) info)
         {
             throw new NotImplementedException();
         }
     }
 
-    public class Host
+    public abstract class Host
     {
-        private static HostOptions _options;
+        private HostOptions _options;
 
-        public static event EventHandler<TcpClient> OnAcceptConnection;
+        private Connections _connection = new Connections();
 
-        public static ConcurrentDictionary<Guid, TcpClient> _clients = new ConcurrentDictionary<Guid, TcpClient>();
+        public IConnectionManager ConnectionManager { get => _connection; }
+
+        public Host()
+        {
+            ConnectionManager.OnConnected += (obj, e) => OnConnect(e);
+            ConnectionManager.OnDisconnected += (obj, e) => OnDisconnect(e);
+            ConnectionManager.OnMessage += (obj, e) => OnMessage(e);
+        }
+
+        public abstract Task OnConnect(Connection e);
+
+        public abstract Task OnDisconnect((Connection, Exception) info);
+
+        public abstract Task OnMessage((Connection, BaseMessage) info);
 
         public async Task RunAsync()
         {
@@ -41,7 +69,7 @@ namespace CheburashkaHots
                 while(true)
                 {
                     var client = await listener.AcceptTcpClientAsync();
-                    _clients.TryAdd(Guid.NewGuid(), client);
+                    _connection.Add(new global::Connection(client, Guid.NewGuid()));
                 }
             }
             catch(Exception ex)
@@ -66,48 +94,90 @@ namespace CheburashkaHots
 
 }
 
-
-public interface IHost
+public interface IObservable<T>
 {
-    //IConnections Connections { get; }
+    void Subscribe(IObserver<T> observer);
 }
 
-public interface IObservable
+public interface IObserver<T>
 {
-    void Subscribe(IObserver observer);
+    void OnError(T obj, Exception error);
+    void OnMessage(T obj, BaseMessage message);
 }
 
-public interface IObserver
+public interface IConnectionManager
 {
-    void OnError(IObservable observable, Exception error);
-    void OnMessage(IObservable observable);
+    event EventHandler<Connection> OnConnected;
+    event EventHandler<(Connection, Exception)> OnDisconnected;
+    event EventHandler<(Connection,BaseMessage)> OnMessage;
 }
 
-public class Connection : IObservable
+public class Connections : IObserver<Connection>, IConnectionManager
 {
-    private IObserver _observer;
-    private byte[] _buffer;
+    private ConcurrentDictionary<Guid,Connection> _connections;
+
+    public event EventHandler<Connection> OnConnected;
+    public event EventHandler<(Connection, Exception)> OnDisconnected;
+    public event EventHandler<(Connection,BaseMessage)> OnMessageManager;
+
+    event EventHandler<(Connection,BaseMessage)> IConnectionManager.OnMessage
+    {
+        add
+        {
+            OnMessageManager += value;
+        }
+
+        remove
+        {
+            OnMessageManager += value;
+        }
+    }
+
+    public void Add(Connection connection)
+    {
+        _connections.TryAdd(connection.Id, connection);
+        connection.Subscribe(this);
+        OnConnected?.Invoke(this, connection);
+    }
+
+    public void OnError(Connection obj, Exception error)
+    {
+        _connections.TryRemove(obj.Id, out _);
+        OnDisconnected?.Invoke(this, (obj, error));
+    }
+
+    public void OnMessage(Connection obj, BaseMessage message)
+    {
+        OnMessageManager?.Invoke(this, (obj, message));
+    }
+}
+
+public class Connection : IObservable<Connection>, IDisposable
+{
+    private IObserver<Connection> _observer;
     private TcpClient _client;
 
-    public Connection(TcpClient client)
+    public Guid Id { get; private set; }
+
+    public Connection(TcpClient client, Guid id)
     {
+        Id = id;
         _client = client;
         Receive();
-        _buffer = new byte[1025];
     }
 
     private void Receive()
     {
-        Task.Run(() =>
+        Task.Run(async () =>
         {
             try
             {
-                using(var memory = new MemoryStream())
                 using(var stream = _client.GetStream())
                 {
                     while(true)
                     {
-                        stream.ReadAsync(_buffer, 0, _buffer.Length);
+                        var message = await stream.GetMessage();
+                        _observer.OnMessage(this, message);
                         //_observer.OnMessage();
                     }
                 }
@@ -120,24 +190,31 @@ public class Connection : IObservable
         });
     }
 
-    public Task Send()
+    public async Task Send(BaseMessage message)
     {
-        throw new NotImplementedException();
         try
         {
             using(var stream = _client.GetStream())
             {
-                //           stream.WriteAsync();
+                var bytes = await message.GetBytes();
+                await stream.WriteAsync(bytes, 0, bytes.Length);
             }
         }
         catch(Exception ex)
         {
-
+            _observer.OnError(this, ex);
         }
     }
 
-    public void Subscribe(IObserver observer)
+    public void Subscribe(IObserver<Connection> observer)
     {
         _observer = observer;
+    }
+
+    public void Dispose()
+    {
+        _observer = null;
+        _client?.Dispose();
+        _client = null;
     }
 }

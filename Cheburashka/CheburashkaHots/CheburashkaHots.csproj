@@ -51,5 +51,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Cheburashka\Cheburashka.csproj">
+      <Project>{ED84818F-642C-4EBC-828C-916D423A5C17}</Project>
+      <Name>Cheburashka</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

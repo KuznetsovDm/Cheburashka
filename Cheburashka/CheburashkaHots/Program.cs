@@ -10,7 +10,7 @@ namespace CheburashkaHots
     {
         static void Main()
         {
-            new Host()
+            new CheburashkaHost()
                      .Configure(options => { options.Port = 10000; })
                      .RunAsync()
                      .GetAwaiter()
